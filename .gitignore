@@ -1,0 +1,15 @@
+# Environment secrets
+.env
+
+# Python cache and virtual environment
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp

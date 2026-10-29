@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OKX Singapore API Access Test | Futures Demo</title>
+    <meta name="description" content="Test d'accès API OKX Futures Démo depuis un VPS Cloudzy à Singapour">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-group">
+                    <div class="status-indicator-orb pulse-green"></div>
+                    <div>
+                        <h1 class="app-title">OKX Singapore API Access Test</h1>
+                        <p class="app-subtitle">Vérification de connectivité & passage d'ordre Futures Démo (BTC-USDT-SWAP)</p>
+                    </div>
+                </div>
+                <div class="env-badge">
+                    <span class="badge-dot"></span>
+                    <span class="badge-text">Mode Démo Strict (x-simulated-trading: 1)</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN CONTAINER -->
+        <main class="main-content">
+            <!-- DIAGNOSTIC BAR -->
+            <section class="diagnostic-grid">
+                <div class="diag-card" id="card-server-ip">
+                    <div class="diag-icon">🌐</div>
+                    <div class="diag-info">
+                        <span class="diag-label">IP Publique du Serveur (VPS Cloudzy)</span>
+                        <span class="diag-val" id="val-server-ip">Détection en cours...</span>
+                    </div>
+                    <button class="btn-refresh" id="btn-refresh-ip" title="Rafraîchir l'IP">↻</button>
+                </div>
+
+                <div class="diag-card" id="card-credentials">
+                    <div class="diag-icon">🔑</div>
+                    <div class="diag-info">
+                        <span class="diag-label">Identifiants OKX Démo (.env)</span>
+                        <span class="diag-val" id="val-credentials">Vérification...</span>
+                    </div>
+                    <span class="badge" id="badge-credentials">Non testé</span>
+                </div>
+            </section>
+
+            <!-- PROGRESSIVE STEPS -->
+            <div class="steps-flow">
+                <!-- STEP A -->
+                <div class="step-card" id="step-card-a">
+                    <div class="step-header">
+                        <div class="step-badge">Étape A</div>
+                        <h2 class="step-title">Connectivité Réseau Publique</h2>
+                    </div>
+                    <p class="step-desc">Vérifie si le VPS parvient à joindre l'API publique OKX (<code>/api/v5/public/time</code>) sans authentification.</p>
+                    <div class="step-action-row">
+                        <button class="btn btn-secondary" id="btn-run-step-a">
+                            <span class="btn-spinner hidden" id="spin-a"></span>
+                            <span class="btn-text">1. Tester la Connectivité Réseau</span>
+                        </button>
+                        <div class="step-status-chip" id="status-chip-a">En attente</div>
+                    </div>
+                </div>
+
+                <!-- STEP B -->
+                <div class="step-card step-locked" id="step-card-b">
+                    <div class="step-header">
+                        <div class="step-badge">Étape B</div>
+                        <h2 class="step-title">Authentification Démo Privée</h2>
+                    </div>
+                    <p class="step-desc">Effectue une requête privée de lecture seule (<code>/api/v5/account/config</code> et <code>balance</code>) pour valider la signature HMAC-SHA256.</p>
+                    <div class="step-action-row">
+                        <button class="btn btn-secondary" id="btn-run-step-b" disabled>
+                            <span class="btn-spinner hidden" id="spin-b"></span>
+                            <span class="btn-text">2. Valider l'Authentification Démo</span>
+                        </button>
+                        <div class="step-status-chip" id="status-chip-b">Bloqué par Étape A</div>
+                    </div>
+                </div>
+
+                <!-- STEP C : TRADING FUTURES DEMO -->
+                <div class="step-card step-card-c step-locked" id="step-card-c">
+                    <div class="step-header">
+                        <div class="step-badge">Étape C</div>
+                        <h2 class="step-title">Ordre Futures Démo (BTC-USDT-SWAP)</h2>
+                    </div>
+                    <p class="step-desc">
+                        Envoie manuel et explicite d'un ordre limite minimal (1 contrat = 0.01 BTC) sur le contrat perpétuel linéaire.
+                    </p>
+
+                    <!-- MARKET TICKER INFO -->
+                    <div class="market-ticker-box" id="market-ticker-box">
+                        <div class="ticker-item">
+                            <span class="ticker-lbl">Instrument</span>
+                            <span class="ticker-val highlight">BTC-USDT-SWAP</span>
+                        </div>
+                        <div class="ticker-item">
+                            <span class="ticker-lbl">Dernier Prix</span>
+                            <span class="ticker-val" id="ticker-last-px">-- USDT</span>
+                        </div>
+                        <div class="ticker-item">
+                            <span class="ticker-lbl">Taille Min.</span>
+                            <span class="ticker-val" id="ticker-min-sz">1 contrat (0.01 BTC)</span>
+                        </div>
+                        <div class="ticker-item">
+                            <span class="ticker-lbl">Type d'Ordre</span>
+                            <span class="ticker-val">Limite (Contrôlé)</span>
+                        </div>
+                    </div>
+
+                    <!-- TRADING BUTTONS -->
+                    <div class="trading-buttons-container">
+                        <button class="btn-trade btn-long" id="btn-trade-long" disabled>
+                            <div class="btn-trade-icon">▲</div>
+                            <div class="btn-trade-text">
+                                <span class="trade-title">ACHETER (LONG)</span>
+                                <span class="trade-sub">Ouvrir position longue Démo</span>
+                            </div>
+                        </button>
+
+                        <button class="btn-trade btn-short" id="btn-trade-short" disabled>
+                            <div class="btn-trade-icon">▼</div>
+                            <div class="btn-trade-text">
+                                <span class="trade-title">VENDRE (SHORT)</span>
+                                <span class="trade-sub">Ouvrir position courte Démo</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="anti-spam-notice">
+                        Protection anti-double soumission active. Une boîte de dialogue de confirmation s'affichera avant l'envoi effectif.
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESULT & VERIFICATION REPORT -->
+            <section class="report-section">
+                <div class="report-header">
+                    <h3 class="report-title">Rapport de Vérification en Temps Réel</h3>
+                    <div class="status-summary-pills">
+                        <span class="pill" id="pill-net">1. Réseau : <strong id="val-pill-net">--</strong></span>
+                        <span class="pill" id="pill-auth">2. Authentification : <strong id="val-pill-auth">--</strong></span>
+                        <span class="pill" id="pill-order">3. Ordre OKX : <strong id="val-pill-order">--</strong></span>
+                        <span class="pill" id="pill-fill">4. Statut Moteur : <strong id="val-pill-fill">--</strong></span>
+                    </div>
+                </div>
+
+                <div class="result-display" id="result-display">
+                    <div class="result-placeholder" id="result-placeholder">
+                        <span class="placeholder-icon">📋</span>
+                        <p>Les résultats détaillés des requêtes (HTTP, code OKX, ordId, latence) apparaîtront ici.</p>
+                    </div>
+                    <div class="result-details hidden" id="result-details">
+                        <!-- Dynamic rendered output -->
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="app-footer">
+            <p>OKX Singapore API Access Test — Dédié exclusivement à la validation d'accès VPS Cloudzy Singapour.</p>
+            <p class="disclaimer">Note : Ce test valide l'accès à l'environnement Démo depuis l'IP du VPS, mais ne constitue pas à lui seul une garantie d'accès à l'environnement Live.</p>
+        </footer>
+    </div>
+
+    <!-- MODAL CONFIRMATION DIALOG -->
+    <div class="modal-overlay hidden" id="order-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-warning-icon">⚠️</div>
+                <h3 class="modal-title">Confirmation d'Envoi d'Ordre</h3>
+            </div>
+            <div class="modal-body">
+                <p class="modal-alert-text">
+                    Vous êtes sur le point d'envoyer manuellement une requête d'ordre sur le marché <strong>Futures Démo</strong> OKX :
+                </p>
+                <div class="order-summary-table">
+                    <div class="summary-row">
+                        <span>Action demandée :</span>
+                        <strong id="modal-action-name" class="highlight-action">LONG</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Contrat :</span>
+                        <strong>BTC-USDT-SWAP</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Mode de marge :</span>
+                        <strong>Cross (Marge croisée)</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Taille de l'ordre :</span>
+                        <strong>1 contrat (0.01 BTC)</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Type d'ordre :</span>
+                        <strong>Limite</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Prix indicatif :</span>
+                        <strong id="modal-price">Calcul en cours...</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Environnement :</span>
+                        <span class="badge-demo">Simulateur Démo</span>
+                    </div>
+                </div>
+                <p class="modal-note">
+                    Confirmez-vous l'envoi de cette requête vers l'API OKX ?
+                </p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" id="btn-cancel-modal">Annuler</button>
+                <button class="btn btn-confirm" id="btn-confirm-modal">Confirmer l'envoi de l'ordre</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
